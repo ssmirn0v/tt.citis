@@ -1,10 +1,7 @@
 package com.uni.vrk.targetedteaching.model;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -13,7 +10,8 @@ import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "users")
 public class UserC {
@@ -41,7 +39,7 @@ public class UserC {
         inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.MERGE, CascadeType.PERSIST })
     private Set<Application> applications;
 
     public UserC(String firstName, String lastName, String patronymic, String email, String password) {

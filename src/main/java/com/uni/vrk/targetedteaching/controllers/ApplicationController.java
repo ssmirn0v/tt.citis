@@ -59,10 +59,23 @@ public class ApplicationController {
                 CustomResponse.builder()
                 .timeStamp(LocalDateTime.now())
                 .data(Map.of("application", applicationService.saveApplication(applicationRequest)))
-                .message("Application saved")
+                .message("Заявление созддано")
                 .status(HttpStatus.CREATED)
                 .statusCode(HttpStatus.CREATED.value())
                 .build()
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CustomResponse> getApplication(@PathVariable String id) {
+        return ResponseEntity.ok(
+                CustomResponse.builder()
+                        .timeStamp(LocalDateTime.now())
+                        .data(Map.of("application", applicationService.getApplication(id)))
+                        .message("Заявление получено")
+                        .status(HttpStatus.CREATED)
+                        .statusCode(HttpStatus.CREATED.value())
+                        .build()
         );
     }
 

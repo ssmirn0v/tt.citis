@@ -6,6 +6,7 @@ import com.uni.vrk.targetedteaching.dto.response.CustomResponse;
 import com.uni.vrk.targetedteaching.interfaces.StatusService;
 import com.uni.vrk.targetedteaching.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,21 +19,22 @@ import java.util.Map;
 @Slf4j
 @CrossOrigin(origins = "*")
 @Controller
-@RequestMapping("/application/{application_id}/status")
+@RequestMapping("/application/{applicationId}/status")
 public class StatusController {
 
+
+    @Autowired
     StatusService statusService;
     UserRepository userRepository;
 
     @CrossOrigin(origins = "*")
     @PreAuthorize("hasRole('ROLE_ANALYST')")
-    @PostMapping("/assign")
-    public ResponseEntity<CustomResponse> assignApplication(@PathVariable String applicationId, @RequestBody AssignRequest assignRequest) {
-        statusService.assignApplication(applicationId, assignRequest);
+    @GetMapping("/assign")
+    public ResponseEntity<CustomResponse> assignApplication(@PathVariable String applicationId) {
         return ResponseEntity.ok(
                 CustomResponse.builder()
                         .timeStamp(LocalDateTime.now())
-                        .data(null)
+                        .data(Map.of("supervisor",statusService.assignApplication(applicationId)))
                         .message("Заявление прикреплено к вам")
                         .status(HttpStatus.NO_CONTENT)
                         .statusCode(HttpStatus.NO_CONTENT.value())
@@ -48,7 +50,6 @@ public class StatusController {
         return ResponseEntity.ok(
                 CustomResponse.builder()
                         .timeStamp(LocalDateTime.now())
-                        .data(null)
                         .message("Кандидат отобран")
                         .status(HttpStatus.NO_CONTENT)
                         .statusCode(HttpStatus.NO_CONTENT.value())
@@ -66,6 +67,21 @@ public class StatusController {
                         .timeStamp(LocalDateTime.now())
                         .data(null)
                         .message("Кандидат выбыл")
+                        .status(HttpStatus.NO_CONTENT)
+                        .statusCode(HttpStatus.NO_CONTENT.value())
+                        .build()
+        );
+    }
+
+    @PreAuthorize("hasRole('ROLE_ANALYST')")
+    @GetMapping("/free")
+    public ResponseEntity<CustomResponse> freeApplication(@PathVariable String applicationId) {
+        statusService.freeApplication(applicationId);
+        return ResponseEntity.ok(
+                CustomResponse.builder()
+                        .timeStamp(LocalDateTime.now())
+                        .data(null)
+                        .message("Заявление теперь свободно")
                         .status(HttpStatus.NO_CONTENT)
                         .statusCode(HttpStatus.NO_CONTENT.value())
                         .build()

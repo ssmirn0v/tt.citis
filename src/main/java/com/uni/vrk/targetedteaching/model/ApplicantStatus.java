@@ -1,5 +1,7 @@
 package com.uni.vrk.targetedteaching.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,7 +17,7 @@ public enum ApplicantStatus {
     STATUS_2("В работе") {
         @Override
         public List<ApplicantStatus> nextStatuses() {
-            return Arrays.asList(STATUS_3, STATUS_4);
+            return Arrays.asList(STATUS_1, STATUS_3, STATUS_4);
         }
     },
     STATUS_3("Отобран") {
@@ -33,9 +35,11 @@ public enum ApplicantStatus {
 
     private String name;
 
-    ApplicantStatus(String ready) {
+    ApplicantStatus(String name) {
+        this.name = name;
     }
 
+    @JsonValue
     public String getName() {
         return this.name;
     }

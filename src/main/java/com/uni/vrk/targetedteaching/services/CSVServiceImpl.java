@@ -15,7 +15,10 @@ import java.util.List;
 @Slf4j
 @Service
 public class CSVServiceImpl implements CSVService {
+
     ApplicationRepository applicationRepository;
+    @Autowired
+    CSVHelper csvHelper;
 
     @Autowired
     private void setApplicationRepository(ApplicationRepository applicationRepository) {
@@ -25,7 +28,7 @@ public class CSVServiceImpl implements CSVService {
 
     public void saveApplications(MultipartFile file) {
         try {
-            List<Application> applications = CSVHelper.csvToApplicationsList(file.getInputStream());
+            List<Application> applications = csvHelper.csvToApplicationsList(file.getInputStream());
 
             for (Application application : applications) {
                 if (!applicationRepository.existsByApplicationId(application.getApplicationId())) {
