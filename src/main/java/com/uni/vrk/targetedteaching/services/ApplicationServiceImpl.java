@@ -8,8 +8,12 @@ import com.uni.vrk.targetedteaching.model.Application;
 import com.uni.vrk.targetedteaching.dto.request.NewApplicationRequest;
 import com.uni.vrk.targetedteaching.dto.request.UpdateApplicationRequest;
 import com.uni.vrk.targetedteaching.interfaces.ApplicationService;
+import com.uni.vrk.targetedteaching.model.Role;
+import com.uni.vrk.targetedteaching.model.RoleE;
 import com.uni.vrk.targetedteaching.model.UserC;
 import com.uni.vrk.targetedteaching.repository.ApplicationRepository;
+import com.uni.vrk.targetedteaching.repository.RoleRepository;
+import com.uni.vrk.targetedteaching.repository.UserRepository;
 import com.uni.vrk.targetedteaching.services.helper.StreamUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,6 +34,10 @@ import java.util.stream.Collectors;
 public class ApplicationServiceImpl implements ApplicationService {
 
     private ApplicationRepository applicationRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private void setApplicationRepository(ApplicationRepository applicationRepository) {
@@ -80,6 +89,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application application = applicationRepository.findByApplicationId(id.toString())
                 .orElseThrow(()-> new EntityNotFoundException("Application with id: " + id + " not found"));
         BeanUtils.copyProperties(updateApplicationRequest, application);
+        UserResponse user = updateApplicationRequest.getSupervisor();
+        if (user != null) {
+            UserC userC = userRepository.findUserCByUserId(user.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            application.setSupervisor(userC);
+            userC.getApplications().add(application);
+            userRepository.save(userC);
+        }
         log.info(updateApplicationRequest.toString());
         log.info(application.toString());
         applicationRepository.save(application);
@@ -87,32 +104,48 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public void deleteApplication(String id) {
+        Application application = applicationRepository.findByApplicationId(id.toString())
+                .orElseThrow(()-> new EntityNotFoundException("Application with id: " + id + " not found"));
+        UserC supervisor = application.getSupervisor();
+        if (supervisor != null) {
+            supervisor = userRepository.findById(supervisor.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            supervisor.getApplications().remove(application);
+            userRepository.save(supervisor);
+        }
         applicationRepository.deleteByApplicationId(id);
     }
 
-    private ApplicationResponse transformToResponse(Application application) {
-        List<ApplicantFileResponse> files = StreamUtils.toStream(application.getFiles())
-                .map(file -> ApplicantFileResponse.builder()
-                        .id(file.getId())
-                        .name(file.getName())
-                        .type(file.getType())
-                        .url(file.getUrl())
-                        .build()
-                )
-                .collect(Collectors.toList());
+    @Override
+    public List<UserResponse> getAllAnalysts() {
+        Role roleAnalyst = roleRepository.findByName(RoleE.ROLE_ANALYST)
+                .orElseThrow(() -> new EntityNotFoundException("Role not found"));
+        List<UserC> analysts = userRepository.findAllByRolesContaining(roleAnalyst);
+        if (analysts != null) {
+            List<UserResponse> analystsResponse = StreamUtils.toStream(analysts)
+                    .map(analyst -> transformToUserResponse(analyst))
+                    .collect(Collectors.toList());
+            return analystsResponse;
 
-        UserResponse userResponse = null;
-        UserC supervisor = application.getSupervisor();
-        if (supervisor != null) {
-            userResponse = UserResponse.builder()
-                    .id(supervisor.getUserId())
-                    .email(supervisor.getEmail())
-                    .firstName(supervisor.getFirstName())
-                    .lastName(supervisor.getLastName())
-                    .patronymic(supervisor.getPatronymic())
-                    .position(supervisor.getPosition())
-                    .build();
         }
+        return new ArrayList<>();
+    }
+
+    private ApplicationResponse transformToResponse(Application application) {
+        List<ApplicantFileResponse> files = new ArrayList<>();
+
+        if (application.getFiles() != null) {
+            files = StreamUtils.toStream(application.getFiles())
+                    .map(file -> ApplicantFileResponse.builder()
+                            .id(file.getId())
+                            .name(file.getName())
+                            .type(file.getType())
+                            .url(file.getUrl())
+                            .build()
+                    )
+                    .collect(Collectors.toList());
+        }
+
 
         ApplicationResponse applicationResponse = ApplicationResponse.builder()
                 .applicationId(application.getApplicationId())
@@ -127,10 +160,25 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .phoneNumber(application.getPhoneNumber())
                 .university(application.getUniversity())
                 .files(files)
-                .supervisor(userResponse)
+                .supervisor(transformToUserResponse(application.getSupervisor()))
                 .status(application.getStatus())
                 .build();
         return applicationResponse;
 
+    }
+
+    private UserResponse transformToUserResponse(UserC user) {
+        UserResponse userResponse = null;
+        if (user != null) {
+            userResponse = UserResponse.builder()
+                    .id(user.getUserId())
+                    .email(user.getEmail())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .patronymic(user.getPatronymic())
+                    .position(user.getPosition())
+                    .build();
+        }
+        return userResponse;
     }
 }

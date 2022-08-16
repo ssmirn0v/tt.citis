@@ -95,6 +95,9 @@ public class AuthServiceImpl implements AuthService {
                 registrationRequest.getEmail(),
                 passwordEncoder.encode(registrationRequest.getPassword())
                 );
+        if (registrationRequest.getPosition() != null) {
+            user.setPosition(registrationRequest.getPosition());
+        }
 
         Set<Role> roles = new HashSet<>();
         Set<String> requestRoles = registrationRequest.getRole();

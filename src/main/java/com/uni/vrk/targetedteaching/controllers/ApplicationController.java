@@ -140,4 +140,19 @@ public class ApplicationController {
             );
         }
     }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/users")
+    public ResponseEntity<CustomResponse> getAllAnalysts() {
+            return ResponseEntity.ok(
+                    CustomResponse.builder()
+                            .timeStamp(LocalDateTime.now())
+                            .message("Пользователи получены")
+                            .data(Map.of("users", applicationService.getAllAnalysts()))
+                            .status(HttpStatus.OK)
+                            .statusCode(HttpStatus.OK.value())
+                            .build()
+            );
+
+    }
 }

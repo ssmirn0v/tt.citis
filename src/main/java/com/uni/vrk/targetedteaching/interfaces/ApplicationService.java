@@ -2,6 +2,7 @@ package com.uni.vrk.targetedteaching.interfaces;
 
 import com.uni.vrk.targetedteaching.dto.response.ApplicationResponse;
 import com.uni.vrk.targetedteaching.dto.response.ListedApplicationResponse;
+import com.uni.vrk.targetedteaching.dto.response.UserResponse;
 import com.uni.vrk.targetedteaching.model.Application;
 import com.uni.vrk.targetedteaching.dto.request.NewApplicationRequest;
 import com.uni.vrk.targetedteaching.dto.request.UpdateApplicationRequest;
@@ -19,4 +20,6 @@ public interface ApplicationService {
     void updateApplication(String id, UpdateApplicationRequest updateApplicationRequest);
 
     void deleteApplication(String id);
+
+    List<UserResponse> getAllAnalysts();
 }
